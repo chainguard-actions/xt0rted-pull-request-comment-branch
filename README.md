@@ -1,17 +1,94 @@
-# xt0rted/pull-request-comment-branch
+# Pull Request Comment Branch
 
-Gets the head ref and sha of a pull request comment
+[![CI](https://github.com/xt0rted/pull-request-comment-branch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/xt0rted/pull-request-comment-branch/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/xt0rted/pull-request-comment-branch/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/xt0rted/pull-request-comment-branch/actions/workflows/codeql-analysis.yml)
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/xt0rted/pull-request-comment-branch](https://github.com/xt0rted/pull-request-comment-branch).
+Get the head ref and sha of a pull request comment.
 
-## Versions
+Workflows for pull request comments are triggered using the [`issue_comment`](https://help.github.com/en/actions/automating-your-workflow-with-github-actions/events-that-trigger-workflows#issue-comment-event-issue_comment) event which runs for both issues and pull requests.
+This action lets you filter your workflow to comments only on pull requests.
+It also gets the head ref and sha for the pull request branch which can be used later in the workflow.
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v1.2.0 | [`v1.2.0`](https://github.com/chainguard-actions/xt0rted-pull-request-comment-branch/tree/v1.2.0) | [`29fe035`](https://github.com/xt0rted/pull-request-comment-branch/commit/29fe0354c01b30fb3de76f193ab33abf8fe5ddb0) |
-| v1.3.0 | [`v1.3.0`](https://github.com/chainguard-actions/xt0rted-pull-request-comment-branch/tree/v1.3.0) | [`f2f0716`](https://github.com/xt0rted/pull-request-comment-branch/commit/f2f07162618551540507cbd00ddf16ffcaa0c72f) |
-| v1.4.0 | [`v1.4.0`](https://github.com/chainguard-actions/xt0rted-pull-request-comment-branch/tree/v1.4.0) | [`653a7d5`](https://github.com/xt0rted/pull-request-comment-branch/commit/653a7d5ca8bd91d3c5cb83286063314d0b063b8e) |
-| v2.0.0 | [`v2.0.0`](https://github.com/chainguard-actions/xt0rted-pull-request-comment-branch/tree/v2.0.0) | [`d97294d`](https://github.com/xt0rted/pull-request-comment-branch/commit/d97294d304604fa98a2600a6e2f916a84b596dc7) |
+The pull request head ref and sha are important because `issue_comment` workflows run against the repository's `default` branch (usually `main` or `master`) and not the pull request's branch.
+With this action you'll be able to pass the ref to [`actions/checkout`](https://github.com/actions/checkout) and work with the pull request's code.
+
+## Usage
+
+```yml
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: xt0rted/pull-request-comment-branch@v2
+        id: comment-branch
+
+      - uses: actions/checkout@v3
+        if: success()
+        with:
+          ref: ${{ steps.comment-branch.outputs.head_ref }}
+
+      - run: git rev-parse --abbrev-ref HEAD
+      - run: git rev-parse --verify HEAD
+```
+
+## Token Permissions
+
+If your repository is using [token permissions](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#permissions) you'll need to set `contents: read`, `issues: read` and `pull-request: read` on either the workflow or the job.
+
+### Workflow Config
+
+```yml
+on: issue_comment
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: xt0rted/pull-request-comment-branch@v2
+```
+
+### Job Config
+
+```yml
+on: issue_comment
+jobs:
+  pr-comment:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: read
+    steps:
+      - uses: xt0rted/pull-request-comment-branch@v2
+```
+
+## Options
+
+### Required
+
+Name | Allowed values | Description
+-- | -- | --
+`repo_token` | `GITHUB_TOKEN` (default) or PAT | `GITHUB_TOKEN` token or a repo scoped PAT.
+
+## Outputs
+
+Name | Decription
+-- | --
+`base_ref` | The name of the branch the pull request will merge into.
+`base_sha` | The head sha of the branch the pull request will merge into.
+`head_ref` | The name of the pull request branch the comment belongs to.
+`head_sha` | The head sha of the pull request branch the comment belongs to.
+
+## License
+
+The scripts and documentation in this project are released under the [MIT License](LICENSE)
 
 ## Privacy
 
