@@ -1,7 +1,5 @@
 {
   "ran": true,
   "passed": true,
-  "output": "\n\u003e pull-request-comment-branch@1.2.0 test\n\u003e tsc --noEmit\n\n",
-  "duration_ms": 1348,
   "exit_code": 0
 }

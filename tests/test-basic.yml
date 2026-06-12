@@ -1,4 +1,4 @@
-name: Test basic usage with repo_token
+name: Test basic usage with repo_token input
 on:
   workflow_dispatch:
 jobs:
@@ -14,14 +14,16 @@ jobs:
         with:
           repo_token: ${{ github.token }}
         continue-on-error: true
-      - name: Assert action was invoked with repo_token
+      - name: Assert action ran with repo_token input
         run: |
-          echo "outcome: ${{ steps.action.outcome }}"
-          # The action requires a real GitHub API context to return PR branch info.
-          # In a local act environment without a real PR comment event, the action
-          # may fail to resolve the PR. We verify it was invoked (not skipped).
+          echo "action outcome: ${{ steps.action.outcome }}"
+          # The action requires an issue_comment event with a PR comment to resolve
+          # branch info via the GitHub API. In a local act environment without a
+          # real PR comment event payload, the action is expected to fail gracefully.
+          # What we are verifying here is that the repo_token input is accepted and
+          # the action is invoked (not a configuration/input validation error).
           if [ "${{ steps.action.outcome }}" = "skipped" ]; then
-            echo "FAIL: action was skipped, expected it to run"
+            echo "FAIL: action was skipped unexpectedly"
             exit 1
           fi
           echo "PASS: action was invoked with repo_token input"
