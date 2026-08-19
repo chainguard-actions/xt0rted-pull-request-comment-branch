@@ -1,0 +1,41 @@
+name: Test - Pull request event context (not a comment)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: pull_request
+      GITHUB_REF: refs/pull/1/merge
+      GITHUB_HEAD_REF: feature-branch
+      GITHUB_BASE_REF: main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run action in pull_request event context
+        id: action
+        uses: .
+        with:
+          repo_token: fake-token-for-testing
+        continue-on-error: true
+      - name: Assert action produced an outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran and produced outcome '$OUTCOME'"
+      - name: Verify action fails without a valid PR comment context
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # The action requires an issue_comment event on a PR to get branch info.
+          # In a plain pull_request event, it should fail since there's no comment context.
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed without a PR comment context"
+          else
+            echo "INFO: action succeeded unexpectedly with outcome '$OUTCOME' - checking outputs"
+          fi

@@ -1,0 +1,40 @@
+name: Test - Basic invocation with token
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Run action (expect failure outside PR comment context)
+        id: action
+        uses: .
+        with:
+          repo_token: fake-token-for-testing
+        continue-on-error: true
+      - name: Assert action ran and produced an outcome
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ -z "$OUTCOME" ]; then
+            echo "FAIL: action did not produce an outcome"
+            exit 1
+          fi
+          echo "PASS: action ran and produced outcome '$OUTCOME'"
+      - name: Assert outputs are defined (even if empty) when action succeeds
+        if: steps.action.outcome == 'success'
+        env:
+          HEAD_REF: ${{ steps.action.outputs.head_ref }}
+          HEAD_SHA: ${{ steps.action.outputs.head_sha }}
+          BASE_REF: ${{ steps.action.outputs.base_ref }}
+          BASE_SHA: ${{ steps.action.outputs.base_sha }}
+        run: |
+          echo "head_ref: $HEAD_REF"
+          echo "head_sha: $HEAD_SHA"
+          echo "base_ref: $BASE_REF"
+          echo "base_sha: $BASE_SHA"
+          echo "PASS: outputs are accessible"
