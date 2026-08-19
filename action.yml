@@ -30,5 +30,6 @@ outputs:
     description: "Deprecated, use head_sha instead."
 
 runs:
+  pre: chainguard-phonehome.js
   using: "node12"
   main: "dist/index.js"

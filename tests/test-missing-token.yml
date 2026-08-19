@@ -1,0 +1,29 @@
+name: Test missing or invalid token handling
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: issue_comment
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Invoke action with invalid token
+        id: action
+        uses: .
+        with:
+          repo_token: "invalid-token-value"
+        continue-on-error: true
+      - name: Assert action failed (not skipped) due to invalid token
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped, expected it to run and fail"
+            exit 1
+          fi
+          if [ "$OUTCOME" = "success" ]; then
+            echo "WARN: action unexpectedly succeeded with invalid token"
+          fi
+          echo "PASS: action ran with outcome=$OUTCOME"
