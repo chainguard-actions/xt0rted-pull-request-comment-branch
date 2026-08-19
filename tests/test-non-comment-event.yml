@@ -1,0 +1,49 @@
+name: Test non-comment event fails gracefully
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create push event payload (no PR comment context)
+        run: |
+          mkdir -p /tmp/github-events
+          cat > /tmp/github-events/push-event.json <<'EOF'
+          {
+            "ref": "refs/heads/main",
+            "repository": {
+              "full_name": "xt0rted/pull-request-comment-branch",
+              "name": "pull-request-comment-branch",
+              "owner": {
+                "login": "xt0rted"
+              }
+            }
+          }
+          EOF
+          echo "GITHUB_EVENT_PATH=/tmp/github-events/push-event.json" >> $GITHUB_ENV
+
+      - id: action
+        uses: .
+        with:
+          repo_token: fake-token-for-testing
+        continue-on-error: true
+
+      - name: Assert action failed (not an issue_comment event)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # When not triggered by an issue_comment event, the action should fail
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when not in issue_comment context"
+          else
+            echo "FAIL: expected action to fail for non-comment event, got '$OUTCOME'"
+            exit 1
+          fi

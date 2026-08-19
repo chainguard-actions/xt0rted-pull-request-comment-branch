@@ -1,0 +1,58 @@
+name: Test issue comment on non-PR issue fails gracefully
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: issue_comment
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create issue_comment event payload without pull_request field
+        run: |
+          mkdir -p /tmp/github-events
+          cat > /tmp/github-events/issue-comment-event.json <<'EOF'
+          {
+            "action": "created",
+            "issue": {
+              "number": 42,
+              "title": "Regular issue, not a PR"
+            },
+            "comment": {
+              "id": 789,
+              "body": "A comment on a regular issue"
+            },
+            "repository": {
+              "full_name": "xt0rted/pull-request-comment-branch",
+              "name": "pull-request-comment-branch",
+              "owner": {
+                "login": "xt0rted"
+              }
+            }
+          }
+          EOF
+          echo "GITHUB_EVENT_PATH=/tmp/github-events/issue-comment-event.json" >> $GITHUB_ENV
+
+      - id: action
+        uses: .
+        with:
+          repo_token: fake-token-for-testing
+        continue-on-error: true
+
+      - name: Assert action failed (comment is not on a PR)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          # When the issue_comment is on a regular issue (not a PR),
+          # the action should fail because there's no pull_request context
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when comment is not on a PR"
+          else
+            echo "FAIL: expected action to fail for non-PR issue comment, got '$OUTCOME'"
+            exit 1
+          fi
