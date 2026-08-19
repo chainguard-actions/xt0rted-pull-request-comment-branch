@@ -1,4 +1,4 @@
-name: Test basic usage with repo_token input
+name: Test basic usage with repo_token
 on:
   workflow_dispatch:
 jobs:
@@ -9,21 +9,27 @@ jobs:
       GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify action.yml exists
+        run: |
+          if [ ! -f "action.yml" ]; then
+            echo "FAIL: action.yml not found"
+            exit 1
+          fi
+          echo "PASS: action.yml found"
       - id: action
         uses: .
         with:
           repo_token: ${{ github.token }}
         continue-on-error: true
-      - name: Assert action ran with repo_token input
+      - name: Assert action ran (may fail without real PR comment context)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "action outcome: ${{ steps.action.outcome }}"
-          # The action requires an issue_comment event with a PR comment to resolve
-          # branch info via the GitHub API. In a local act environment without a
-          # real PR comment event payload, the action is expected to fail gracefully.
-          # What we are verifying here is that the repo_token input is accepted and
-          # the action is invoked (not a configuration/input validation error).
-          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
-            echo "FAIL: action was skipped unexpectedly"
+          echo "action outcome: $OUTCOME"
+          # The action is expected to fail in act without a real PR comment event
+          # but it should not be skipped — it must have run
+          if [ "$OUTCOME" = "skipped" ]; then
+            echo "FAIL: action was skipped, expected it to run"
             exit 1
           fi
-          echo "PASS: action was invoked with repo_token input"
+          echo "PASS: action ran (outcome=$OUTCOME)"
