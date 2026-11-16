@@ -4,8 +4,13 @@
   "version": "v1.4.0",
   "commit_sha": "653a7d5ca8bd91d3c5cb83286063314d0b063b8e",
   "url": "https://github.com/xt0rted/pull-request-comment-branch",
-  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "policy_sha": "374911c4be584df24e6da57af2d990570ef0f859",
   "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
   "test_agent_version": "2",
-  "harden_agent_version": "2"
+  "harden_agent_version": "2",
+  "dist_artifact": {
+    "gcs_uri": "gs://patch-actions-node-artifacts/dist-artifacts/xt0rted/pull-request-comment-branch/v1.4.0/sha256-fa36ba6b7b1b0360a90e2e9e8a30029b731ffce3d09d35b8b191480997586f4d.tar.gz",
+    "sha256": "fa36ba6b7b1b0360a90e2e9e8a30029b731ffce3d09d35b8b191480997586f4d",
+    "size_bytes": 225979
+  }
 }
